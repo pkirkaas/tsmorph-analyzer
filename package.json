@@ -1,0 +1,20 @@
+{
+  "name": "tsmorph-analyzer",
+  "version": "1.0.0",
+  "description": "Analyze TypeScript Library Code",
+  "license": "ISC",
+  "author": "Paul Kirkaas",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf ./dist ./node_modules package-lock.json &&  npm i && tsc"
+  },
+  "dependencies": {
+    "pk-ts-sqlite-lib": "github:pkirkaas/pk-ts-sqlite-lib#working",
+    "ts-morph": "*",
+    "typeorm": "*",
+    "typescript": "*",
+    "typescript-ast-util": "*"
+  }
+}
