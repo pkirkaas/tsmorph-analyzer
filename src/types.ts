@@ -14,6 +14,7 @@ export interface TypeDefinition {
   genericParameters?: TypeDefinition[];
   members?: TypeProperty[];
   unionMembers?: TypeDefinition[];
+  srcFiles?: string[];  
   intersectionMembers?: TypeDefinition[];
   arrayElementType?: TypeDefinition;
   tupleElements?: TypeDefinition[];
@@ -42,6 +43,7 @@ export interface InterfaceDefinition {
   name: string;
   genericParameters?: TypeDefinition[];
   properties: TypeProperty[];
+  srcFiles?: string[];  
   extends?: string[];
   resolved?: InterfaceDefinition;
   constraints?: TypeDefinition[];  // For generic constraints

@@ -149,13 +149,25 @@ export class TypeScriptAnalyzer {
         return {
           kind: 'circular',
           name,
-          circularReference: name
+          circularReference: name,
+          srcFiles: [typeAlias.getSourceFile().getFilePath()],
         };
       }
 
-      if (this.typeCache.has(name)) {
-        return this.typeCache.get(name)!;
-      }
+//      if (this.typeCache.has(name)) {
+//        return this.typeCache.get(name)!;
+//      }
+
+        if (this.typeCache.has(name)) {
+            const cached = this.typeCache.get(name)!;
+            // Add the current file to srcFiles if it's not already there
+            const currentFile = typeAlias.getSourceFile().getFilePath();
+            if (!cached.srcFiles.includes(currentFile)) {
+                cached.srcFiles.push(currentFile);
+            }
+            return cached;
+        }
+
 
       this.processingTypes.add(name);
 
@@ -167,6 +179,7 @@ export class TypeScriptAnalyzer {
       const typeDefinition: TypeDefinition = {
         kind: 'reference',
         name,
+        srcFiles: [typeAlias.getSourceFile().getFilePath()],
       };
 
       const typeParams = typeAlias.getTypeParameters();
@@ -196,14 +209,24 @@ export class TypeScriptAnalyzer {
     const name = interfaceDecl.getName();
 
     try {
+      //if (this.interfaceCache.has(name)) {
+       // return this.interfaceCache.get(name)!;
+      //}
       if (this.interfaceCache.has(name)) {
-        return this.interfaceCache.get(name)!;
-      }
+        const cached = this.interfaceCache.get(name)!;
+        // Add the current file to srcFiles if it's not already there
+        const currentFile = interfaceDecl.getSourceFile().getFilePath();
+        if (!cached.srcFiles.includes(currentFile)) {
+            cached.srcFiles.push(currentFile);
+        }
+        return cached;
+    }
 
       const definition: InterfaceDefinition = {
         name,
         properties: [],
         extends: interfaceDecl.getExtends().map(ext => ext.getText()),
+                    srcFiles: [interfaceDecl.getSourceFile().getFilePath()],
       };
 
       const typeParams = interfaceDecl.getTypeParameters();
@@ -366,6 +389,93 @@ export class TypeScriptAnalyzer {
 
     return interfaces;
   }
+
+  // New methods for including file paths
+
+
+/**
+ * Finds all declarations of a specific type across the project
+ * @param typeName Name of the type to find
+ * @returns Array of file paths containing the type declaration
+ */
+public findTypeDeclarations(typeName: string): string[] {
+  const declarations: string[] = [];
+  
+  this.project.getSourceFiles().forEach(sourceFile => {
+      const typeAlias = sourceFile.getTypeAlias(typeName);
+      if (typeAlias) {
+          declarations.push(sourceFile.getFilePath());
+      }
+  });
+
+  return declarations;
+}
+
+/**
+* Finds all declarations of a specific interface across the project
+* @param interfaceName Name of the interface to find
+* @returns Array of file paths containing the interface declaration
+*/
+public findInterfaceDeclarations(interfaceName: string): string[] {
+  const declarations: string[] = [];
+  
+  this.project.getSourceFiles().forEach(sourceFile => {
+      const interfaceDecl = sourceFile.getInterface(interfaceName);
+      if (interfaceDecl) {
+          declarations.push(sourceFile.getFilePath());
+      }
+  });
+
+  return declarations;
+}
+
+
+
+/**
+ * Returns statistics about type and interface declarations
+ * @returns Object containing declaration statistics
+ */
+public getDeclarationStats(): {
+  typesWithMultipleDeclarations: Array<{ name: string, files: string[] }>;
+  interfacesWithMultipleDeclarations: Array<{ name: string, files: string[] }>;
+} {
+  const typeMap = new Map<string, Set<string>>();
+  const interfaceMap = new Map<string, Set<string>>();
+
+  this.project.getSourceFiles().forEach(sourceFile => {
+      const filePath = sourceFile.getFilePath();
+      
+      // Collect type declarations
+      sourceFile.getTypeAliases().forEach(type => {
+          const name = type.getName();
+          if (!typeMap.has(name)) {
+              typeMap.set(name, new Set());
+          }
+          typeMap.get(name)!.add(filePath);
+      });
+
+      // Collect interface declarations
+      sourceFile.getInterfaces().forEach(int => {
+          const name = int.getName();
+          if (!interfaceMap.has(name)) {
+              interfaceMap.set(name, new Set());
+          }
+          interfaceMap.get(name)!.add(filePath);
+      });
+  });
+
+  return {
+      typesWithMultipleDeclarations: Array.from(typeMap.entries())
+          .filter(([_, files]) => files.size > 1)
+          .map(([name, files]) => ({ name, files: Array.from(files) })),
+      interfacesWithMultipleDeclarations: Array.from(interfaceMap.entries())
+          .filter(([_, files]) => files.size > 1)
+          .map(([name, files]) => ({ name, files: Array.from(files) }))
+  };
+}
+
+
+
 
   // New testing methods
 

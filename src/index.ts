@@ -17,7 +17,8 @@ setInspectLevels();
 import {TypeScriptAnalyzer,
 } from './analyzer.js';
 
-const commonPath = "C:/www/TypeScriptLibs/Pk-Ts-Common"
+//const commonPath = "C:/www/TypeScriptLibs/Pk-Ts-Common"
+const commonPath = "C:/www/TypeScriptLibs/Pk-Ts-Node"
 
 let cmAn = new TypeScriptAnalyzer(commonPath);
 let proj = cmAn.project;
@@ -33,3 +34,4 @@ console.log({
   analysis,
 });
 
+dbgWrt(analysis,'NodeLibTypes');
